@@ -54,24 +54,24 @@ pub fn run(cfg: Config) -> anyhow::Result<u32> {
 }
 
 fn parse(input: String) -> anyhow::Result<(Vec<u32>, Vec<u32>)> {
-    let mut list1 = Vec::new();
-    let mut list2 = Vec::new();
-    for line in input.lines() {
-        let mut iter = line.split_whitespace();
-        list1.push(iter.next().unwrap().parse::<u32>().unwrap());
-        list2.push(iter.next().unwrap().parse::<u32>().unwrap());
-    }
-    Ok((list1, list2))
+    Ok(input
+        .lines()
+        .fold((Vec::new(), Vec::new()), |mut lists, line| {
+            let mut iter = line.split_whitespace().map(|n| n.parse::<u32>().unwrap());
+            lists.0.push(iter.next().unwrap());
+            lists.1.push(iter.next().unwrap());
+            lists
+        }))
 }
 
 fn process(data: (Vec<u32>, Vec<u32>)) -> u32 {
     let (mut list1, mut list2) = data;
     list1.sort_unstable();
     list2.sort_unstable();
-    let mut total = 0;
-    for (n1, n2) in list1.into_iter().zip(list2.into_iter()) {
-        total += n1.abs_diff(n2);
-    }
 
-    total
+    list1
+        .into_iter()
+        .zip(list2)
+        .map(|(n1, n2)| n1.abs_diff(n2))
+        .sum()
 }
