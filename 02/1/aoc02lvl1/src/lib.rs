@@ -48,16 +48,53 @@ pub fn run(cfg: Config) -> anyhow::Result<u32> {
 
     let data = parse(input_string)?;
     let result = process(data);
+    println!("{}", result);
 
     Ok(result)
 }
 
-fn parse(input: String) -> anyhow::Result<String> {
-    // remember to change the return type
-    todo!()
+fn parse(input: String) -> anyhow::Result<Vec<Vec<u32>>> {
+    Ok(input
+        .lines()
+        .map(|line| {
+            line.split_whitespace()
+                .map(|n| n.parse::<u32>().unwrap())
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>())
 }
 
-fn process(data: String) -> u32 {
-    // remember to change the param type
-    todo!()
+fn process(data: Vec<Vec<u32>>) -> u32 {
+    let mut safe_count = 0;
+    'lvl_loop: for lvl in data {
+        let transition = match lvl[0].cmp(&lvl[1]) {
+            std::cmp::Ordering::Less => "less",
+            std::cmp::Ordering::Greater => "Greater",
+            std::cmp::Ordering::Equal => continue,
+        };
+
+        for pair in lvl[0..lvl.len()].windows(2) {
+            match pair[0].cmp(&pair[1]) {
+                std::cmp::Ordering::Less => {
+                    if transition == "Greater" {
+                        continue 'lvl_loop;
+                    }
+                }
+                std::cmp::Ordering::Greater => {
+                    if transition == "less" {
+                        continue 'lvl_loop;
+                    }
+                }
+                std::cmp::Ordering::Equal => continue 'lvl_loop,
+            }
+
+            if pair[0].abs_diff(pair[1]) > 3 {
+                continue 'lvl_loop;
+            }
+        }
+
+        safe_count += 1;
+    }
+
+    safe_count
 }
