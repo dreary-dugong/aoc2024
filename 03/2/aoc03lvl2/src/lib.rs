@@ -7,6 +7,9 @@ use clap::Parser;
 
 extern crate anyhow;
 
+extern crate regex;
+use regex::Regex;
+
 #[derive(Parser, Debug)]
 pub struct Args {
     /// path to the input file
@@ -48,16 +51,50 @@ pub fn run(cfg: Config) -> anyhow::Result<u32> {
 
     let data = parse(input_string)?;
     let result = process(data);
+    println!("{}", result);
 
     Ok(result)
 }
 
-fn parse(input: String) -> anyhow::Result<String> {
-    // remember to change the return type
-    todo!()
+fn parse(input: String) -> anyhow::Result<Vec<Inst>> {
+    let regex = Regex::new(r"(mul\((\d{1,3}),(\d{1,3})\))|(do\(\))|(don\'t\(\))").unwrap();
+    let mut result = Vec::new();
+    for cap in regex.captures_iter(&input) {
+        if cap.get(1).is_some() {
+            let x = cap.get(2).unwrap().as_str().parse::<u32>().unwrap();
+            let y = cap.get(3).unwrap().as_str().parse::<u32>().unwrap();
+            result.push(Inst::Mul(x, y));
+        } else if cap.get(4).is_some() {
+            result.push(Inst::Do);
+        } else if cap.get(5).is_some() {
+            result.push(Inst::Dont);
+        }
+    }
+
+    Ok(result)
 }
 
-fn process(data: String) -> u32 {
-    // remember to change the param type
-    todo!()
+fn process(data: Vec<Inst>) -> u32 {
+    let mut do_muls = true;
+    let mut result = 0;
+    for inst in data.into_iter() {
+        match inst {
+            Inst::Do => do_muls = true,
+            Inst::Dont => do_muls = false,
+            Inst::Mul(x, y) => {
+                if do_muls {
+                    result += x * y
+                }
+            }
+        }
+    }
+
+    result
+}
+
+#[derive(Debug)]
+enum Inst {
+    Mul(u32, u32),
+    Do,
+    Dont,
 }

@@ -7,6 +7,9 @@ use clap::Parser;
 
 extern crate anyhow;
 
+extern crate regex;
+use regex::Regex;
+
 #[derive(Parser, Debug)]
 pub struct Args {
     /// path to the input file
@@ -48,16 +51,21 @@ pub fn run(cfg: Config) -> anyhow::Result<u32> {
 
     let data = parse(input_string)?;
     let result = process(data);
+    println!("{}", result);
 
     Ok(result)
 }
 
-fn parse(input: String) -> anyhow::Result<String> {
-    // remember to change the return type
-    todo!()
+fn parse(input: String) -> anyhow::Result<Vec<(u32, u32)>> {
+    let regex = Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").unwrap();
+    let mut result = Vec::new();
+    for (_, [n, m]) in regex.captures_iter(&input).map(|c| c.extract()) {
+        result.push((n.parse::<u32>().unwrap(), m.parse::<u32>().unwrap()));
+    }
+
+    Ok(result)
 }
 
-fn process(data: String) -> u32 {
-    // remember to change the param type
-    todo!()
+fn process(data: Vec<(u32, u32)>) -> u32 {
+    data.into_iter().map(|(n, m)| n * m).sum()
 }
