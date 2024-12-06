@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
@@ -48,16 +49,113 @@ pub fn run(cfg: Config) -> anyhow::Result<u32> {
 
     let data = parse(input_string)?;
     let result = process(data);
+    println!("{}", result);
 
     Ok(result)
 }
 
-fn parse(input: String) -> anyhow::Result<String> {
-    // remember to change the return type
-    todo!()
+fn parse(input: String) -> anyhow::Result<(Vec<Rule>, Vec<Vec<u32>>)> {
+    let mut initer = input.split("\n\n");
+    let rule_str = initer.next().unwrap();
+    let rules = rule_str
+        .lines()
+        .map(|r| r.split("|"))
+        .map(|mut iter| {
+            let before = iter.next().unwrap().parse::<u32>().unwrap();
+            let after = iter.next().unwrap().parse::<u32>().unwrap();
+            Rule { before, after }
+        })
+        .collect::<Vec<Rule>>();
+    let updates = initer
+        .next()
+        .unwrap()
+        .lines()
+        .map(|line| {
+            line.split(",")
+                .map(|n| n.parse::<u32>().unwrap())
+                .collect::<Vec<u32>>()
+        })
+        .collect::<Vec<Vec<u32>>>();
+
+    Ok((rules, updates))
 }
 
-fn process(data: String) -> u32 {
-    // remember to change the param type
-    todo!()
+fn process(data: (Vec<Rule>, Vec<Vec<u32>>)) -> u32 {
+    let (rules, updates) = data;
+
+    // construct graph of page rules
+    let mut pages = HashMap::new();
+    for rule in rules {
+        let before = pages.entry(rule.before).or_insert(Page::new(rule.before));
+        before.comes_before.push(rule.after);
+
+        let after = pages.entry(rule.after).or_insert(Page::new(rule.after));
+        after.comes_after.push(rule.before);
+    }
+
+    // check updates one at a time
+    let mut incorrect_updates = Vec::new();
+    'update_loop: for mut update in updates {
+        let clone = update.clone();
+
+        let mut came_after: Vec<u32> = Vec::new(); // all pages that come after the current page in the current update
+        while let Some(cur) = update.pop() {
+            for successor in came_after.iter() {
+                // search for contradictions
+                if let Some(page) = pages.get(successor) {
+                    if page.comes_before.contains(&cur) {
+                        incorrect_updates.push(clone);
+                        continue 'update_loop;
+                    }
+                }
+            }
+            came_after.push(cur);
+        }
+    }
+
+    // now we have a vector of updates that need to be properly ordered
+    let mut mid_sum = 0;
+    for mut update in incorrect_updates {
+        // treat the incorrect update as a queue and keep popping until we find
+        // the right value for the next slot
+
+        let mut ordered_update = Vec::new();
+        'order_loop: while !update.is_empty() {
+            let cur = update.remove(0);
+            for other in update.iter() {
+                if let Some(page) = pages.get(other) {
+                    if page.comes_before.contains(&cur) {
+                        // if cur can't come next, put it on the end of the queue
+                        update.push(cur);
+                        continue 'order_loop;
+                    }
+                }
+            }
+            // otherwise, it comes next
+            ordered_update.push(cur);
+        }
+
+        mid_sum += ordered_update[ordered_update.len() / 2];
+    }
+
+    mid_sum
+}
+
+struct Rule {
+    before: u32,
+    after: u32,
+}
+struct Page {
+    id: u32,
+    comes_before: Vec<u32>,
+    comes_after: Vec<u32>,
+}
+impl Page {
+    fn new(id: u32) -> Self {
+        Page {
+            id,
+            comes_after: Default::default(),
+            comes_before: Default::default(),
+        }
+    }
 }
