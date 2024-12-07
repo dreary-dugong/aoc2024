@@ -35,7 +35,7 @@ impl Config {
     }
 }
 
-pub fn run(cfg: Config) -> anyhow::Result<u32> {
+pub fn run(cfg: Config) -> anyhow::Result<i64> {
     // figure out where to get our input from and read it into a string
     let input_string = match cfg.input {
         InputConfig::File(path) => fs::read_to_string(path)?,
@@ -48,16 +48,68 @@ pub fn run(cfg: Config) -> anyhow::Result<u32> {
 
     let data = parse(input_string)?;
     let result = process(data);
+    println!("{}", result);
 
     Ok(result)
 }
 
-fn parse(input: String) -> anyhow::Result<String> {
-    // remember to change the return type
-    todo!()
+fn parse(input: String) -> anyhow::Result<Vec<Equation>> {
+    Ok(input
+        .lines()
+        .map(|line| {
+            let mut iter = line.split(":");
+            let next_string = iter.next().unwrap();
+            let test_value = next_string.parse::<i64>().unwrap();
+            let coefficients = iter
+                .next()
+                .unwrap()
+                .split_whitespace()
+                .map(|val| val.parse::<i64>().unwrap())
+                .collect();
+            Equation {
+                test_value,
+                coefficients,
+            }
+        })
+        .collect())
 }
 
-fn process(data: String) -> u32 {
-    // remember to change the param type
-    todo!()
+fn process(data: Vec<Equation>) -> i64 {
+    let mut output = 0;
+    for equation in data {
+        if get_solution_count(&equation.coefficients, equation.test_value, 0) > 0 {
+            output += equation.test_value;
+        }
+    }
+    output
+}
+
+fn get_solution_count(coefficients: &[i64], test_value: i64, running_total: i64) -> i64 {
+    // base case: no more coefficients ot operate on
+    if coefficients.is_empty() {
+        // we made the test value, so this way was a valid solution
+        if running_total == test_value {
+            return 1;
+        } else {
+            // we didn't make it :(
+            return 0;
+        }
+    }
+
+    // recursive case: spin up a new stack frame for each operation
+    get_solution_count(
+        &coefficients[1..coefficients.len()],
+        test_value,
+        running_total * coefficients[0],
+    ) + get_solution_count(
+        &coefficients[1..coefficients.len()],
+        test_value,
+        running_total + coefficients[0],
+    )
+}
+
+#[derive(Debug, Clone)]
+struct Equation {
+    test_value: i64,
+    coefficients: Vec<i64>,
 }

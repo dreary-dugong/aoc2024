@@ -96,7 +96,7 @@ fn parse(input: String) -> anyhow::Result<(Board, Guard)> {
 }
 
 fn process(data: (Board, Guard)) -> u32 {
-    let (board, guard) = data;
+    let (mut board, guard) = data;
 
     let mut loop_count = 0;
 
@@ -105,13 +105,17 @@ fn process(data: (Board, Guard)) -> u32 {
 
     // try inserting an obstacle at each path
     for spot in guard_path {
-        let mut board_copy = board.clone();
-        board_copy
+        board
             .insert_obstacle(&spot)
             .expect("we know this spot is empty");
-        if is_loopy(&board_copy, guard.clone()) {
+        if is_loopy(&board, guard.clone()) {
             loop_count += 1;
         }
+
+        // clean up the board to use it again
+        board
+            .remove_obstacle(&spot)
+            .expect("we know there's an obstacle here");
     }
 
     loop_count
@@ -193,6 +197,16 @@ impl Board {
             Err("out of bounds")
         } else {
             self.grid[pos.y as usize][pos.x as usize] = Space::Obstacle;
+            Ok(())
+        }
+    }
+    fn remove_obstacle(&mut self, pos: &Pos) -> Result<(), &str> {
+        if !self.is_in_bounds(pos) {
+            Err("out of bounds")
+        } else if let Some(Space::Empty) = self.get_space(pos) {
+            Err("no obstacle here")
+        } else {
+            self.grid[pos.y as usize][pos.x as usize] = Space::Empty;
             Ok(())
         }
     }
