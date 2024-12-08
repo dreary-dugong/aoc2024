@@ -95,20 +95,22 @@ fn process(data: (HashMap<char, Vec<Coord>>, usize, usize)) -> u32 {
             let dx = pos1.x - pos2.x;
             let dy = pos1.y - pos2.y;
 
-            let antinode1 = Coord {
-                x: pos1.x + dx,
-                y: pos1.y + dy,
-            };
-            let antinode2 = Coord {
-                x: pos2.x - dx,
-                y: pos2.y - dy,
-            };
-
-            if is_valid_coord(&antinode1, max_x, max_y) {
-                antinodes.insert(antinode1);
+            let mut cur = *pos1;
+            while is_valid_coord(&cur, max_x, max_y) {
+                antinodes.insert(cur);
+                cur = Coord {
+                    x: cur.x + dx,
+                    y: cur.y + dy,
+                };
             }
-            if is_valid_coord(&antinode2, max_x, max_y) {
-                antinodes.insert(antinode2);
+
+            let mut cur = *pos2;
+            while is_valid_coord(&cur, max_x, max_y) {
+                antinodes.insert(cur);
+                cur = Coord {
+                    x: cur.x - dx,
+                    y: cur.y - dy,
+                };
             }
         }
     }
@@ -116,7 +118,7 @@ fn process(data: (HashMap<char, Vec<Coord>>, usize, usize)) -> u32 {
     antinodes.len() as u32
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Copy)]
 struct Coord {
     x: i32,
     y: i32,
