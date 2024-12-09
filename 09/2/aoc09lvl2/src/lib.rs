@@ -113,6 +113,7 @@ fn calc_checksum(files: &[FileSpace]) -> u64 {
     files
         .iter()
         .map(|file| (file.id as u64, file.pos as u64, file.length as u64))
+        // derived from gauss' formula
         .map(|(id, pos, len)| id * (len.pow(2) + 2 * pos * len - len) / 2)
         .sum()
 }
