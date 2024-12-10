@@ -1,9 +1,9 @@
 // remember to change the module name!
-use aoc10lvl1::Config;
+use aoc10lvl2::Config;
 use std::process;
 fn main() {
     // remember to change the module name!
-    if let Err(e) = aoc10lvl1::run(Config::make()) {
+    if let Err(e) = aoc10lvl2::run(Config::make()) {
         eprintln!("{}", e);
         process::exit(1);
     } else {

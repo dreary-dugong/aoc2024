@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
@@ -65,7 +64,7 @@ fn parse(input: String) -> anyhow::Result<TopographicMap> {
 fn process(data: TopographicMap) -> u32 {
     data.get_trailheads()
         .into_iter()
-        .map(|trailhead| data.get_nines(&trailhead).len() as u32)
+        .map(|trailhead| data.count_nines(&trailhead))
         .sum()
 }
 
@@ -123,19 +122,17 @@ impl TopographicMap {
             })
             .collect()
     }
-    fn get_nines(&self, trail: &Pos) -> HashSet<Pos> {
+    fn count_nines(&self, trail: &Pos) -> u32 {
         let cur_height = self.get_height_at(trail);
         // base case
         if cur_height == 9 {
-            let mut set = HashSet::new();
-            set.insert(trail.clone());
-            return set;
+            return 1;
         }
         // otherwise, sum of the neighbors
         self.get_neighbors(trail)
             .into_iter()
             .filter(|neighbor| self.get_height_at(neighbor) == cur_height + 1)
-            .flat_map(|neighbor| self.get_nines(&neighbor))
-            .collect()
+            .map(|neighbor| self.count_nines(&neighbor))
+            .sum()
     }
 }
