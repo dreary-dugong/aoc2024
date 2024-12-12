@@ -64,7 +64,7 @@ fn parse(input: String) -> anyhow::Result<Stones> {
 }
 
 fn process(mut stones: Stones) -> usize {
-    stones.count_after_blinks(25) as usize
+    stones.count_after_blinks(75) as usize
 }
 
 #[derive(Debug, Clone)]
